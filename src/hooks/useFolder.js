@@ -49,7 +49,14 @@ function reducer(state, { type, payload }) {
   }
 }
 
-export function useFolder(folderId = null, folder = null) {
+export function useFolder(
+  folderId = null,
+  folder = null,
+  newFile,
+  newFolder,
+  setNewFile,
+    setNewFolder
+) {
   const [state, dispatch] = useReducer(reducer, {
     folderId,
     folder,
@@ -74,10 +81,9 @@ export function useFolder(folderId = null, folder = null) {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        
         dispatch({
           type: ACTIONS.UPDATE_FOLDER,
-          payload: { folder:docSnap.data() },
+          payload: { folder: docSnap.data() },
         });
       } else {
         dispatch({
@@ -88,10 +94,11 @@ export function useFolder(folderId = null, folder = null) {
     };
 
     updateFolder();
+  
   }, [folderId]);
 
   useEffect(() => {
-    const getChildFolder = async () => {
+    const getChildFolders = async () => {
       const q = query(
         collection(db, "folders"),
         where("parentId", "==", folderId),
@@ -111,16 +118,16 @@ export function useFolder(folderId = null, folder = null) {
         },
       });
     };
-    getChildFolder();
-  }, [folderId, currentUser]);
+    getChildFolders();
+    if(newFolder) setNewFolder(false)
+  }, [folderId, currentUser,newFolder]);
 
   useEffect(() => {
-    const getChildFolder = async () => {
+    const getChildFiles = async () => {
       const q = query(
         collection(db, "files"),
         where("folderId", "==", folderId),
-        where("userId", "==", currentUser.uid),
-        // orderBy("createdAt")
+        where("userId", "==", currentUser.uid)
       );
 
       const querySnapshot = await getDocs(q);
@@ -135,8 +142,9 @@ export function useFolder(folderId = null, folder = null) {
         },
       });
     };
-    getChildFolder();
-  }, [folderId, currentUser]);
-
+    getChildFiles();
+    if(newFile) setNewFile(false)
+  }, [folderId, currentUser,  newFile]);
+  
   return state;
 }

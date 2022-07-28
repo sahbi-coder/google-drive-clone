@@ -1,29 +1,36 @@
 import React, { useState } from "react";
-import { Modal,Container,Form,Button } from "react-bootstrap";
+import { Modal, Container, Form, Button } from "react-bootstrap";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFolder } from "@fortawesome/free-solid-svg-icons";
 
-import {  doc, setDoc, serverTimestamp,db } from "../firebase";
+import { doc, setDoc, serverTimestamp, db } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
-import { ROOT_FOLDER } from "../hooks/useFolder"
+import { ROOT_FOLDER } from "../hooks/useFolder";
+import { useNavigate } from "react-router-dom";
+import AddFileButton from "./AddFile";
 
-function AddFolder({ currentFolder }) {
-
+function AddFolder({ currentFolder,setNewFolder }) {
   const [IsOpen, setIsOpen] = useState(false);
   const [id, setId] = useState(false);
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
 
-  async function addFolder(id, userId,path) {
-    
+  async function addFolder(id, userId, path) {
+    try {
+      await setDoc(doc(db, "folders", id), {
+        id,
+        userId,
+        parentId: currentFolder.id,
+        path,
+        createdAt: serverTimestamp(),
+      });
 
-    await setDoc(doc(db, "folders", id), {
-      id,
-      userId,
-      parentId: currentFolder.id,
-      path,
-      createdAt: serverTimestamp(),
-    });
+      
+      setNewFolder(true)
+    } catch {
+      alert('error creating folder')
+    }
   }
 
   const openModal = (e) => {
@@ -41,12 +48,14 @@ function AddFolder({ currentFolder }) {
     if (currentFolder == null) return;
 
     const path = [...currentFolder.path];
+    if (currentFolder === ROOT_FOLDER) {
+      path.push({ parentId: null, id });
+    }
     if (currentFolder !== ROOT_FOLDER) {
       path.push({ parentId: currentFolder.id, id });
-      
     }
 
-    addFolder(id,currentUser.uid,path);
+    addFolder(id, currentUser.uid, path);
     setId("");
     setIsOpen(false);
   };

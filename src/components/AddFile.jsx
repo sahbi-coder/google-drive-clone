@@ -23,7 +23,7 @@ import { ROOT_FOLDER } from "../hooks/useFolder";
 import { v4 as uuidV4 } from "uuid";
 import { ProgressBar, Toast } from "react-bootstrap";
 
-export default function AddFileButton({ currentFolder }) {
+export default function AddFileButton({ currentFolder,setNewFile }) {
   const [uploadingFiles, setUploadingFiles] = useState([]);
   const { currentUser } = useAuth();
 
@@ -38,78 +38,87 @@ export default function AddFileButton({ currentFolder }) {
     ]);
     const filePath =
       currentFolder === ROOT_FOLDER
-        ? `${currentFolder.path.join("/")}/${file.name}`
-        : `${currentFolder.path.join("/")}/${currentFolder.name}/${file.name}`;
-
-    const storageRef = ref(storage, `/files/${currentUser.uid}/${filePath}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
-
-    uploadTask.on(
-      "state_changed",
-      (snapshot) => {
-        const progress = snapshot.bytesTransferred / snapshot.totalBytes;
-        setUploadingFiles((prevUploadingFiles) => {
-          return prevUploadingFiles.map((uploadFile) => {
-            if (uploadFile.id === id) {
-              return { ...uploadFile, progress: progress };
-            }
-
-            return uploadFile;
+      ? `${currentFolder.path.join("/")}/${file.name}`
+      : `${currentFolder.path.join("/")}/${currentFolder.name}/${file.name}`;
+      
+      const storageRef = ref(storage, `/files/${currentUser.uid}/${filePath}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+      try{
+      
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress = snapshot.bytesTransferred / snapshot.totalBytes;
+          setUploadingFiles((prevUploadingFiles) => {
+            return prevUploadingFiles.map((uploadFile) => {
+              if (uploadFile.id === id) {
+                return { ...uploadFile, progress: progress };
+              }
+  
+              return uploadFile;
+            });
           });
-        });
-      },
-      () => {
-        setUploadingFiles((prevUploadingFiles) => {
-          return prevUploadingFiles.map((uploadFile) => {
-            if (uploadFile.id === id) {
-              return { ...uploadFile, error: true };
-            }
-            return uploadFile;
+        },
+        () => {
+          setUploadingFiles((prevUploadingFiles) => {
+            return prevUploadingFiles.map((uploadFile) => {
+              if (uploadFile.id === id) {
+                return { ...uploadFile, error: true };
+              }
+              return uploadFile;
+            });
           });
-        });
-      },
-      () => {
-        setUploadingFiles((prevUploadingFiles) => {
-          return prevUploadingFiles.filter((uploadFile) => {
-            return uploadFile.id !== id;
+        },
+        () => {
+          setUploadingFiles((prevUploadingFiles) => {
+            return prevUploadingFiles.filter((uploadFile) => {
+              return uploadFile.id !== id;
+            });
           });
-        });
+  
+          getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+            const addToDb = async () => {
+              const q = query(
+                collection(db, "files"),
+                where("name", "==", file.name),
+                where("userId", "==", currentUser.uid),
+                where("folderId", "==", currentFolder.id)
+              );
+           
+  
+              const querySnapshot = await getDocs(q);
+  
+              const existingFile =
+                querySnapshot.docs.length && querySnapshot.docs[0];
+  
+              if (existingFile) {
+                const ref = doc(db, "files", file.name);
+  
+                await updateDoc(ref, {
+                  url,
+                });
+                setNewFile(true)
+              } else {
+                const fileToAdd = {
+                  url,
+                  name: file.name,
+                  createdAt: serverTimestamp(),
+                  folderId: currentFolder.id,
+                  userId: currentUser.uid,
+                };
+                await setDoc(doc(db, "files", file.name), fileToAdd);
+                setNewFile(true)
+              }
+            };
+            addToDb();
+          });
+        }
+      );
+    }
+    catch{
+      
+    }
 
-        getDownloadURL(uploadTask.snapshot.ref).then((url) => {
-          const addToDb = async () => {
-            const q = query(
-              collection(db, "files"),
-              where("name", "==", file.name),
-              where("userId", "==", currentUser.uid)
-              // where("folderId", "==", currentFolder.id)
-            );
-
-            const querySnapshot = await getDocs(q);
-
-            const existingFile =
-              querySnapshot.docs.length && querySnapshot.docs[0];
-
-            if (existingFile) {
-              const ref = doc(db, "files", file.name);
-
-              await updateDoc(ref, {
-                url,
-              });
-            } else {
-              const fileToAdd = {
-                url,
-                name: file.name,
-                createdAt: serverTimestamp(),
-                folderId: currentFolder.id,
-                userId: currentUser.uid,
-              };
-              await setDoc(doc(db, "files", file.name), fileToAdd);
-            }
-          };
-          addToDb();
-        });
-      }
-    );
   }
 
   return (

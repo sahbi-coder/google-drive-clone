@@ -10,6 +10,10 @@ export default function BreadCrumbs({ currentFolder }) {
   let path = currentFolder === ROOT_FOLDER ? [] : [ROOT_FOLDER];
   if (currentFolder) path = [...path, ...currentFolder.path];
 
+  // if(currentFolder&&!currentFolder.parentId) path = [ROOT_FOLDER,currentFolder]
+
+  
+
   return (
     <Breadcrumb
       className="flex-grow-1"
