@@ -16,7 +16,6 @@ import {
   setDoc,
   doc,
   serverTimestamp,
-  orderBy,
   updateDoc,
 } from "../firebase";
 import { ROOT_FOLDER } from "../hooks/useFolder";
@@ -123,7 +122,7 @@ export default function AddFileButton({ currentFolder,setNewFile }) {
 
   return (
     <>
-      <label className="btn btn-outline-success btn-sm m-0 mr-2">
+      <label className="btn btn-outline-success btn-sm m-1 mr-2">
         <FontAwesomeIcon icon={faFileUpload} />
         <input
           type="file"

@@ -60,10 +60,11 @@ function AddFolder({ currentFolder,setNewFolder }) {
     setIsOpen(false);
   };
   return (
-    <Container>
-      <Button variant="outline-success">
+    <>
+      <Button variant="outline-success" className="m-1">
         <FontAwesomeIcon icon={faFolder} onClick={openModal} />
       </Button>
+    <Container>
       <Modal show={IsOpen}>
         <Modal.Body>
           <Form>
@@ -91,6 +92,7 @@ function AddFolder({ currentFolder,setNewFolder }) {
         </Modal.Footer>
       </Modal>
     </Container>
+    </>
   );
 }
 

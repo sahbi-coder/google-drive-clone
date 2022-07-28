@@ -1,24 +1,29 @@
 import React from "react";
-import { Breadcrumb } from "react-bootstrap";
+import { Breadcrumb, BreadcrumbItem } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { ROOT_FOLDER } from "../hooks/useFolder";
 
-
 export default function BreadCrumbs({ currentFolder }) {
-
- 
   let path = currentFolder === ROOT_FOLDER ? [] : [ROOT_FOLDER];
   if (currentFolder) path = [...path, ...currentFolder.path];
-
-  // if(currentFolder&&!currentFolder.parentId) path = [ROOT_FOLDER,currentFolder]
-
-  
 
   return (
     <Breadcrumb
       className="flex-grow-1"
-      listProps={{ className: "bg-white pl-0 m-0" }}
+      listProps={{ className: "bg-white pl-0 m-1" }}
     >
+      <BreadcrumbItem
+        linkAs={Link}
+        linkProps={{
+          to: {
+            pathname: `/dashboard`,
+          },
+        }}
+        className="text-truncate d-inline-block"
+        style={{ maxWidth: "150px" }}
+      >
+        root
+      </BreadcrumbItem>
       {path.map((folder, index) => (
         <Breadcrumb.Item
           key={folder.id}
@@ -41,7 +46,7 @@ export default function BreadCrumbs({ currentFolder }) {
           style={{ maxWidth: "200px" }}
           active
         >
-          {currentFolder.id}
+          {currentFolder.id||'root'}
         </Breadcrumb.Item>
       )}
     </Breadcrumb>
